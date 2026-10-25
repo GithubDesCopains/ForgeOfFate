@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Ennemi" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Ennemi.gd" id="1_ennemi"]
+
+[resource]
+script = ExtResource("1_ennemi")
+nom = "Gobelin"
+pv_max = 8
+degats_riposte = 2
+recompense_or = 2
+recompense_eclats = 1

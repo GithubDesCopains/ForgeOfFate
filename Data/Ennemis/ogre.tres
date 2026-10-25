@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Ennemi" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Ennemi.gd" id="1_ennemi"]
+[ext_resource type="Script" path="res://Scripts/Face.gd" id="2_face"]
+
+[sub_resource type="Resource" id="face_a"]
+script = ExtResource("2_face")
+attaque = 3
+
+[sub_resource type="Resource" id="face_b"]
+script = ExtResource("2_face")
+attaque = 4
+
+[sub_resource type="Resource" id="face_c"]
+script = ExtResource("2_face")
+attaque = 5
+defense = 0
+
+[resource]
+script = ExtResource("1_ennemi")
+nom = "Ogre"
+pv_max = 18
+degats_riposte = 4
+recompense_or = 5
+recompense_eclats = 2
+faces = Array[Face]([SubResource("face_a"), SubResource("face_b"), SubResource("face_c")])

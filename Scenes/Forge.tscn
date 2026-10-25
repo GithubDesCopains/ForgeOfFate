@@ -1,0 +1,138 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/ForgeScreen.gd" id="1_forge"]
+
+[node name="Forge" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_forge")
+
+[node name="Fond" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.08, 0.05, 1)
+
+[node name="Accent" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 6.0
+grow_horizontal = 2
+color = Color(0.78, 0.48, 0.16, 1)
+
+[node name="Marge" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Marge"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Titre" type="Label" parent="Marge/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.78, 0.4, 1)
+theme_override_font_sizes/font_size = 32
+text = "La Forge"
+horizontal_alignment = 1
+
+[node name="Ressources" type="HBoxContainer" parent="Marge/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="OrLabel" type="Label" parent="Marge/VBox/Ressources"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.82, 0.4, 1)
+theme_override_font_sizes/font_size = 22
+text = "Or : 0"
+
+[node name="EclatsLabel" type="Label" parent="Marge/VBox/Ressources"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "Éclats : 0"
+
+[node name="SoinLabel" type="Label" parent="Marge/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "La forge vous soigne."
+horizontal_alignment = 1
+
+[node name="Separateur" type="HSeparator" parent="Marge/VBox"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Marge/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Colonnes" type="HBoxContainer" parent="Marge/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 40
+
+[node name="DeBox" type="VBoxContainer" parent="Marge/VBox/Scroll/Colonnes"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="DeTitre" type="Label" parent="Marge/VBox/Scroll/Colonnes/DeBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Votre dé (6 faces)"
+
+[node name="DeList" type="VBoxContainer" parent="Marge/VBox/Scroll/Colonnes/DeBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BoutiqueBox" type="VBoxContainer" parent="Marge/VBox/Scroll/Colonnes"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="BoutiqueTitre" type="Label" parent="Marge/VBox/Scroll/Colonnes/BoutiqueBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Offre du jour"
+
+[node name="BoutiqueList" type="VBoxContainer" parent="Marge/VBox/Scroll/Colonnes/BoutiqueBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Message" type="Label" parent="Marge/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 2
+horizontal_alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="Marge/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BoutonAnnuler" type="Button" parent="Marge/VBox/Actions"]
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+text = "Annuler la sélection"
+
+[node name="BoutonCombat" type="Button" parent="Marge/VBox/Actions"]
+custom_minimum_size = Vector2(240, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Prochain combat"

@@ -1,0 +1,11 @@
+class_name OffreForge
+extends Resource
+
+## Entrée de boutique : face, prix (or / éclats), stock, étage minimum.
+
+@export var id: String = ""
+@export var face: Face
+@export var cout_or: int = 0
+@export var cout_eclats: int = 0
+@export var stock_max: int = 2
+@export var etage_min: int = 1

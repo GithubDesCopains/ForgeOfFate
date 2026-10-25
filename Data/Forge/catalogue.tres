@@ -1,0 +1,226 @@
+[gd_resource type="Resource" script_class="CatalogueForge" load_steps=38 format=3]
+
+[ext_resource type="Script" path="res://Scripts/CatalogueForge.gd" id="1_cat"]
+[ext_resource type="Script" path="res://Scripts/OffreForge.gd" id="2_offre"]
+[ext_resource type="Script" path="res://Scripts/Face.gd" id="3_face"]
+
+[sub_resource type="Resource" id="f_atk3"]
+script = ExtResource("3_face")
+attaque = 3
+
+[sub_resource type="Resource" id="f_atk4"]
+script = ExtResource("3_face")
+attaque = 4
+
+[sub_resource type="Resource" id="f_atk5"]
+script = ExtResource("3_face")
+attaque = 5
+
+[sub_resource type="Resource" id="f_def3"]
+script = ExtResource("3_face")
+defense = 3
+
+[sub_resource type="Resource" id="f_def4"]
+script = ExtResource("3_face")
+defense = 4
+
+[sub_resource type="Resource" id="f_or3"]
+script = ExtResource("3_face")
+or_gain = 3
+
+[sub_resource type="Resource" id="f_or4"]
+script = ExtResource("3_face")
+or_gain = 4
+
+[sub_resource type="Resource" id="f_atk_or"]
+script = ExtResource("3_face")
+attaque = 1
+or_gain = 1
+
+[sub_resource type="Resource" id="f_def_or"]
+script = ExtResource("3_face")
+defense = 1
+or_gain = 1
+
+[sub_resource type="Resource" id="f_atk_def"]
+script = ExtResource("3_face")
+attaque = 1
+defense = 1
+
+[sub_resource type="Resource" id="f_atk2_or"]
+script = ExtResource("3_face")
+attaque = 2
+or_gain = 1
+
+[sub_resource type="Resource" id="f_trio"]
+script = ExtResource("3_face")
+attaque = 1
+defense = 1
+or_gain = 1
+
+[sub_resource type="Resource" id="f_soin"]
+script = ExtResource("3_face")
+soin = 3
+
+[sub_resource type="Resource" id="f_garde"]
+script = ExtResource("3_face")
+attaque = 3
+special = 1
+
+[sub_resource type="Resource" id="f_chaine"]
+script = ExtResource("3_face")
+or_gain = 2
+special = 2
+
+[sub_resource type="Resource" id="f_poison"]
+script = ExtResource("3_face")
+attaque = 1
+special = 3
+
+[sub_resource type="Resource" id="f_relance"]
+script = ExtResource("3_face")
+or_gain = 1
+special = 4
+
+[sub_resource type="Resource" id="o_atk3"]
+script = ExtResource("2_offre")
+id = "atk3"
+face = SubResource("f_atk3")
+cout_or = 4
+stock_max = 4
+etage_min = 1
+
+[sub_resource type="Resource" id="o_atk4"]
+script = ExtResource("2_offre")
+id = "atk4"
+face = SubResource("f_atk4")
+cout_or = 6
+stock_max = 3
+etage_min = 1
+
+[sub_resource type="Resource" id="o_atk5"]
+script = ExtResource("2_offre")
+id = "atk5"
+face = SubResource("f_atk5")
+cout_or = 9
+stock_max = 2
+etage_min = 2
+
+[sub_resource type="Resource" id="o_def3"]
+script = ExtResource("2_offre")
+id = "def3"
+face = SubResource("f_def3")
+cout_or = 3
+stock_max = 4
+etage_min = 1
+
+[sub_resource type="Resource" id="o_def4"]
+script = ExtResource("2_offre")
+id = "def4"
+face = SubResource("f_def4")
+cout_or = 5
+stock_max = 3
+etage_min = 1
+
+[sub_resource type="Resource" id="o_or3"]
+script = ExtResource("2_offre")
+id = "or3"
+face = SubResource("f_or3")
+cout_or = 3
+stock_max = 4
+etage_min = 1
+
+[sub_resource type="Resource" id="o_or4"]
+script = ExtResource("2_offre")
+id = "or4"
+face = SubResource("f_or4")
+cout_or = 5
+stock_max = 3
+etage_min = 2
+
+[sub_resource type="Resource" id="o_atk_or"]
+script = ExtResource("2_offre")
+id = "atk_or"
+face = SubResource("f_atk_or")
+cout_or = 4
+stock_max = 3
+etage_min = 1
+
+[sub_resource type="Resource" id="o_def_or"]
+script = ExtResource("2_offre")
+id = "def_or"
+face = SubResource("f_def_or")
+cout_or = 4
+stock_max = 3
+etage_min = 1
+
+[sub_resource type="Resource" id="o_atk_def"]
+script = ExtResource("2_offre")
+id = "atk_def"
+face = SubResource("f_atk_def")
+cout_or = 5
+stock_max = 2
+etage_min = 1
+
+[sub_resource type="Resource" id="o_atk2_or"]
+script = ExtResource("2_offre")
+id = "atk2_or"
+face = SubResource("f_atk2_or")
+cout_or = 7
+stock_max = 2
+etage_min = 2
+
+[sub_resource type="Resource" id="o_trio"]
+script = ExtResource("2_offre")
+id = "trio"
+face = SubResource("f_trio")
+cout_or = 8
+stock_max = 1
+etage_min = 2
+
+[sub_resource type="Resource" id="o_soin"]
+script = ExtResource("2_offre")
+id = "soin"
+face = SubResource("f_soin")
+cout_or = 5
+stock_max = 2
+etage_min = 1
+
+[sub_resource type="Resource" id="o_garde"]
+script = ExtResource("2_offre")
+id = "garde"
+face = SubResource("f_garde")
+cout_or = 8
+cout_eclats = 1
+stock_max = 2
+etage_min = 2
+
+[sub_resource type="Resource" id="o_chaine"]
+script = ExtResource("2_offre")
+id = "chaine"
+face = SubResource("f_chaine")
+cout_or = 6
+stock_max = 2
+etage_min = 1
+
+[sub_resource type="Resource" id="o_poison"]
+script = ExtResource("2_offre")
+id = "poison"
+face = SubResource("f_poison")
+cout_or = 7
+cout_eclats = 1
+stock_max = 2
+etage_min = 2
+
+[sub_resource type="Resource" id="o_relance"]
+script = ExtResource("2_offre")
+id = "relance"
+face = SubResource("f_relance")
+cout_or = 6
+cout_eclats = 1
+stock_max = 1
+etage_min = 2
+
+[resource]
+script = ExtResource("1_cat")
+offres = Array[OffreForge]([SubResource("o_atk3"), SubResource("o_atk4"), SubResource("o_atk5"), SubResource("o_def3"), SubResource("o_def4"), SubResource("o_or3"), SubResource("o_or4"), SubResource("o_atk_or"), SubResource("o_def_or"), SubResource("o_atk_def"), SubResource("o_atk2_or"), SubResource("o_trio"), SubResource("o_soin"), SubResource("o_garde"), SubResource("o_chaine"), SubResource("o_poison"), SubResource("o_relance")])

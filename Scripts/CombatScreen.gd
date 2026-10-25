@@ -152,8 +152,8 @@ func _on_or_salle_change(montant: int) -> void:
 func _creer_popup(texte: String, couleur: Color, position_globale: Vector2) -> void:
 	var label := Label.new()
 	label.text = texte
-	label.theme_override_colors/font_color = couleur
-	label.theme_override_font_sizes/font_size = 24
+	label.add_theme_color_override("font_color", couleur)
+	label.add_theme_font_size_override("font_size", 24)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.top_level = true
 	label.position = position_globale + Vector2(-40, -20)

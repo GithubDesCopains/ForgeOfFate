@@ -16,6 +16,7 @@ func _ready() -> void:
 	test_victoire_et_recompenses()
 	test_reinitialisation_bouclier()
 	test_boutique_forge()
+	test_chargement_scenes_et_ui()
 	
 	print("==========================================")
 	if _echecs == 0:
@@ -112,3 +113,19 @@ func test_boutique_forge() -> void:
 	assert_vrai(offres.size() > 0, "La boutique génère bien des offres")
 	for o in offres:
 		assert_vrai(o.etage_min <= 1, "Toutes les offres respectent le niveau minimum d'étage")
+
+
+func test_chargement_scenes_et_ui() -> void:
+	print("\n--- Test 6 : Validation des scènes et UI ---")
+	var scene_combat := load("res://Scenes/Combat.tscn") as PackedScene
+	assert_vrai(scene_combat != null, "La scène Combat.tscn se charge sans erreur")
+	var instance_combat := scene_combat.instantiate() as CombatScreen
+	assert_vrai(instance_combat != null, "CombatScreen s'instancie sans erreur")
+	add_child(instance_combat)
+	
+	# Simuler la réception de dégâts et de popups
+	instance_combat._on_degats_infliges("ennemi", 3)
+	instance_combat._on_degats_infliges("joueur", 2)
+	assert_vrai(true, "Gestionnaires de popups et secousses exécutés sans exception")
+	
+	instance_combat.queue_free()

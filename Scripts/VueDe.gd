@@ -41,11 +41,14 @@ func animer_lancer(face: Face, index: int) -> void:
 		_tween.kill()
 	_tween = create_tween()
 	_cube.pivot_offset = _cube.size / 2.0
-	for _i in 6:
-		_tween.tween_property(_cube, "rotation_degrees", _cube.rotation_degrees + 60.0, 0.07)
+	_cube.rotation_degrees = 0.0
+	for i in 6:
+		_tween.tween_property(_cube, "rotation_degrees", (i + 1) * 60.0, 0.07)
 		_tween.tween_callback(_afficher_face_aleatoire)
-	_tween.tween_callback(_afficher.bind(face, index))
-	_tween.tween_property(_cube, "rotation_degrees", 0.0, 0.12)
+	_tween.tween_callback(func() -> void:
+		_cube.rotation_degrees = 0.0
+		_afficher(face, index)
+	)
 
 
 func _afficher_face_aleatoire() -> void:

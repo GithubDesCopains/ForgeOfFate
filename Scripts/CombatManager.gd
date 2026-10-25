@@ -92,14 +92,6 @@ func lancer_de_joueur() -> void:
 
 
 func _appliquer_face(face: Face) -> bool:
-	var attaque: int = face.attaque
-	if face.special == Face.Special.DEGATS_DOUBLES_SI_BOUCLIER and bouclier_joueur > 0 and attaque > 0:
-		attaque *= 2
-	if attaque > 0:
-		_infliger_degats_ennemi(attaque)
-		if etat == EtatCombat.VICTOIRE:
-			_derniere_etait_or = face.a_or()
-			return false
 	if face.defense > 0:
 		bouclier_joueur += face.defense
 		bouclier_change.emit(bouclier_joueur)
@@ -112,6 +104,14 @@ func _appliquer_face(face: Face) -> bool:
 	if gain_or > 0:
 		or_salle += gain_or
 		or_salle_change.emit(or_salle)
+	var attaque: int = face.attaque
+	if face.special == Face.Special.DEGATS_DOUBLES_SI_BOUCLIER and bouclier_joueur > 0 and attaque > 0:
+		attaque *= 2
+	if attaque > 0:
+		_infliger_degats_ennemi(attaque)
+		if etat == EtatCombat.VICTOIRE:
+			_derniere_etait_or = face.a_or()
+			return false
 	if face.special == Face.Special.POISON:
 		poison_ennemi += 1
 		poison_change.emit(poison_ennemi)

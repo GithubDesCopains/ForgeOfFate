@@ -38,6 +38,7 @@ func _rafraichir() -> void:
 
 func _reconstruire_de() -> void:
 	for enfant in _de_list.get_children():
+		_de_list.remove_child(enfant)
 		enfant.queue_free()
 	_lignes_de.clear()
 	var faces: Array[Face] = EtatPartie.de_joueur.faces
@@ -61,6 +62,7 @@ func _reconstruire_de() -> void:
 
 func _reconstruire_boutique() -> void:
 	for enfant in _boutique_list.get_children():
+		_boutique_list.remove_child(enfant)
 		enfant.queue_free()
 	for offre in EtatPartie.offre_forge:
 		var ligne := HBoxContainer.new()

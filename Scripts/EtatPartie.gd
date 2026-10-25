@@ -117,9 +117,14 @@ func aller_a_forge() -> void:
 	get_tree().change_scene_to_file(SCENE_FORGE)
 
 
-func aller_au_combat() -> void:
+func preparer_nouveau_combat() -> void:
 	phase = Phase.COMBAT
 	offre_forge.clear()
+	bouclier_joueur = 0
+
+
+func aller_au_combat() -> void:
+	preparer_nouveau_combat()
 	get_tree().change_scene_to_file(SCENE_COMBAT)
 
 
@@ -165,6 +170,14 @@ func ennemi_pour_etage(n: int) -> Ennemi:
 	var extra: int = maxi(0, n - 1 - idx)
 	copie.pv_max += extra * 4
 	copie.degats_riposte += extra
+	if extra > 0 and copie.a_un_de():
+		var nouvelles_faces: Array[Face] = []
+		for f in copie.faces:
+			var f_copie: Face = f.dupliquer()
+			if f_copie.attaque > 0:
+				f_copie.attaque += extra
+			nouvelles_faces.append(f_copie)
+		copie.faces = nouvelles_faces
 	if extra > 0:
 		copie.nom = "%s (salle %d)" % [src.nom, n]
 	return copie

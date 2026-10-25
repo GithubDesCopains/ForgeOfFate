@@ -7,6 +7,7 @@ const NB_FACES_MAX: int = 6
 
 var faces: Array[Face] = []
 var dernier_index: int = -1
+var derniere_face: Face = null  ## Dernière face obtenue (utile pour la relance partielle)
 
 
 func _init(faces_personnalisees: Array[Face] = []) -> void:
@@ -40,7 +41,8 @@ func lancer(rng: RandomNumberGenerator = null) -> Face:
 		dernier_index = randi() % faces.size()
 	else:
 		dernier_index = rng.randi() % faces.size()
-	return faces[dernier_index]
+	derniere_face = faces[dernier_index]
+	return derniere_face
 
 
 func peut_ajouter_face() -> bool:

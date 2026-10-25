@@ -18,6 +18,7 @@ extends Control
 @onready var _ennemi_pv_bar: ProgressBar = $Marge/VBox/Colonnes/EnnemiBox/EnnemiInner/EnnemiPVBar
 @onready var _joueur_pv_bar: ProgressBar = $Marge/VBox/Colonnes/JoueurBox/JoueurInner/JoueurPVBar
 @onready var _bouton_lancer: Button = $Marge/VBox/BoutonLancer
+@onready var _bouton_relancer: Button = $Marge/VBox/BoutonRelancer
 @onready var _bouton_forge: Button = $Marge/VBox/BoutonForge
 @onready var _bouton_titre: Button = $Marge/VBox/BoutonTitre
 @onready var _message_fin: Label = $Marge/VBox/MessageFin
@@ -26,6 +27,7 @@ extends Control
 var _dernier_pv_joueur: int = -1
 var _dernier_bouclier: int = -1
 var _dernier_or_salle: int = -1
+var _relance_dispo: bool = false  ## True si la relance manuelle est disponible ce tour
 
 
 func _ready() -> void:
@@ -40,16 +42,20 @@ func _ready() -> void:
 	_combat.poison_change.connect(_on_poison_change)
 	_combat.combat_termine.connect(_on_combat_termine)
 	_combat.tour_joueur_pret.connect(_maj_bouton_lancer)
+	_combat.relance_disponible.connect(_on_relance_disponible)
 	EtatPartie.or_change.connect(_on_or_bourse_change)
 	EtatPartie.eclats_change.connect(_on_eclats_change)
 
 	_bouton_lancer.pressed.connect(_on_bouton_lancer)
-	_bouton_lancer.text = "Lancer les dés"
+	_bouton_lancer.text = "🎲 Lancer les dés"
+	_bouton_relancer.pressed.connect(_on_bouton_relancer)
+	_bouton_relancer.text = "🔄 Relancer (1/tour)"
 	_bouton_forge.pressed.connect(_on_bouton_forge_presse)
 	_bouton_titre.pressed.connect(_on_bouton_titre_presse)
 
 	_bouton_forge.visible = false
 	_bouton_titre.visible = false
+	_bouton_relancer.visible = false
 	_poison.visible = false
 	_riposte.text = ""
 	_rafraichir_entete()
@@ -61,7 +67,7 @@ func _ready() -> void:
 
 
 func _rafraichir_entete() -> void:
-	_salle.text = "Salle %d" % EtatPartie.etage
+	_salle.text = "Salle %d / %d" % [EtatPartie.etage, EtatPartie.ETAGES_MAX]
 	_or_bourse.text = "Bourse : %d or" % EtatPartie.or_total
 	_eclats.text = "Éclats : %d" % EtatPartie.eclats
 
@@ -78,12 +84,34 @@ func _on_bouton_lancer() -> void:
 	if not _combat.peut_lancer():
 		return
 	_bouton_lancer.disabled = true
+	_bouton_relancer.disabled = true
 	_riposte.text = ""
 	_combat.lancer_de_joueur()
 
 
+func _on_bouton_relancer() -> void:
+	if not _combat.peut_lancer() or not _relance_dispo:
+		return
+	_bouton_lancer.disabled = true
+	_bouton_relancer.disabled = true
+	_riposte.text = "Relance — pas de riposte ce tour !"
+	# On relance tous les dés par défaut (simple pour l'instant)
+	var indices: Array = range(_combat.des_joueur.size())
+	_combat.relancer_des(indices)
+
+
+func _on_relance_disponible(disponible: bool) -> void:
+	_relance_dispo = disponible
+	_bouton_relancer.visible = disponible
+	_bouton_relancer.disabled = not disponible
+	if disponible:
+		_creer_popup("🔄 Relance dispo !", Color(0.4, 0.9, 1.0, 1.0),
+				_joueur_box.global_position + _joueur_box.size / 2.0)
+
+
 func _maj_bouton_lancer() -> void:
 	_bouton_lancer.disabled = not _combat.peut_lancer()
+	_bouton_relancer.disabled = not (_combat.peut_lancer() and _relance_dispo)
 
 
 func _on_de_lance(face: Face, index: int) -> void:
@@ -201,6 +229,7 @@ func _on_poison_change(valeur: int) -> void:
 
 func _on_combat_termine(victoire: bool) -> void:
 	_bouton_lancer.disabled = true
+	_bouton_relancer.visible = false
 	if victoire:
 		_message_fin.text = "Victoire ! L'or de salle rejoint la bourse.\nSoin à la forge : +%d PV." % EtatPartie.SOIN_FORGE
 		_bouton_forge.visible = true

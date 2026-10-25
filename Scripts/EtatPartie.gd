@@ -16,11 +16,13 @@ const ENNEMI_GOBELIN: String = "res://Data/Ennemis/gobelin.tres"
 const ENNEMI_BANDIT: String = "res://Data/Ennemis/bandit.tres"
 const ENNEMI_OGRE: String = "res://Data/Ennemis/ogre.tres"
 
-const PV_MAX_JOUEUR: int = 15
+const PV_MAX_JOUEUR: int = 20
 const OR_DE_DEPART: int = 0
 const ECLATS_DE_DEPART: int = 0
-const SOIN_FORGE: int = 3
+const SOIN_FORGE: int = 5
 const TAILLE_OFFRE: int = 6
+const ETAGES_MAX: int = 10
+const MULTIPLICATEUR_OR: float = 2.0
 
 var phase: Phase = Phase.TITRE
 var des_joueur: Array[De] = [De.new(), De.new()]
@@ -104,7 +106,8 @@ func terminer_combat_victoire(or_salle: int, pv: int, bouclier: int) -> void:
 	bouclier_joueur = bouclier
 	var bonus_or: int = ennemi_actuel.recompense_or if ennemi_actuel else 0
 	var bonus_eclats: int = ennemi_actuel.recompense_eclats if ennemi_actuel else 0
-	ajouter_or(or_salle + bonus_or)
+	var or_total_gagne: int = roundi((or_salle + bonus_or) * MULTIPLICATEUR_OR)
+	ajouter_or(or_total_gagne)
 	ajouter_eclats(bonus_eclats)
 	salles_gagnees += 1
 	phase = Phase.FORGE
@@ -165,13 +168,23 @@ func regenerer_offre() -> void:
 
 
 func ennemi_pour_etage(n: int) -> Ennemi:
+	## Cycle: Gobelin (1-3), Bandit (4-6), Ogre (7-9), Boss Ogre (10)
 	var chemins: PackedStringArray = [ENNEMI_GOBELIN, ENNEMI_BANDIT, ENNEMI_OGRE]
-	var idx: int = mini(n - 1, chemins.size() - 1)
-	var src := load(chemins[idx]) as Ennemi
+	var est_boss: bool = (n >= ETAGES_MAX)
+	var idx_base: int = clampi((n - 1) / 3, 0, chemins.size() - 1)
+	var src := load(chemins[idx_base]) as Ennemi
 	var copie: Ennemi = src.duplicate(true) as Ennemi
-	var extra: int = maxi(0, n - 1 - idx)
-	copie.pv_max += extra * 4
-	copie.degats_riposte += extra
+	var rang: int = (n - 1) % 3  # 0, 1 ou 2 dans chaque groupe
+	var extra: int = rang
+	copie.pv_max += n * 2  # Progression régulière de PV selon l'étage
+	copie.degats_riposte = maxi(1, 1 + (n / 3))
+	if est_boss:
+		copie.pv_max = 40
+		copie.degats_riposte = 4
+		copie.nom = "☠ Seigneur des Dés"
+		copie.recompense_or = 15
+		copie.recompense_eclats = 5
+		return copie
 	if extra > 0 and copie.a_un_de():
 		var nouvelles_faces: Array[Face] = []
 		for f in copie.faces:
@@ -180,7 +193,7 @@ func ennemi_pour_etage(n: int) -> Ennemi:
 				f_copie.attaque += extra
 			nouvelles_faces.append(f_copie)
 		copie.faces = nouvelles_faces
-	if extra > 0:
+	if n > 1:
 		copie.nom = "%s (salle %d)" % [src.nom, n]
 	return copie
 

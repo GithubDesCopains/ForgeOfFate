@@ -73,24 +73,33 @@ func test_de_et_faces() -> void:
 
 func test_ennemi_scaling() -> void:
 	print("\n--- Test 2 : Échelonnage des ennemis ---")
+	# Nouveau cycle : Gobelin (1-3), Bandit (4-6), Ogre (7-9), Boss (10)
 	var gobelin := EtatPartie.ennemi_pour_etage(1)
 	assert_egal(gobelin.nom, "Gobelin", "Étage 1 = Gobelin")
-	assert_egal(gobelin.pv_max, 8, "PV Gobelin = 8")
+	# PV Gobelin base (8) + 1*2 = 10
+	assert_egal(gobelin.pv_max, 10, "PV Gobelin étage 1 = 10")
 	assert_egal(gobelin.degats_riposte, 1, "Dégâts Gobelin = 1 à la fois")
 	
-	var bandit := EtatPartie.ennemi_pour_etage(2)
-	assert_egal(bandit.nom, "Bandit", "Étage 2 = Bandit")
+	var gobelin2 := EtatPartie.ennemi_pour_etage(2)
+	assert_vrai(gobelin2.nom.begins_with("Gobelin"), "Étage 2 = Gobelin")
 	
-	var ogre_normal := EtatPartie.ennemi_pour_etage(3)
-	assert_egal(ogre_normal.nom, "Ogre", "Étage 3 = Ogre")
-	assert_egal(ogre_normal.pv_max, 18, "PV Ogre = 18")
+	var gobelin3 := EtatPartie.ennemi_pour_etage(3)
+	assert_vrai(gobelin3.nom.begins_with("Gobelin"), "Étage 3 = encore Gobelin")
 	
-	# Étage 4 : extra = 1, les faces de l'ogre doivent avoir +1 attaque
-	var ogre_salle_4 := EtatPartie.ennemi_pour_etage(4)
-	assert_egal(ogre_salle_4.nom, "Ogre (salle 4)", "Nom échelonné étage 4")
-	assert_egal(ogre_salle_4.pv_max, 22, "PV Ogre salle 4 = 18 + 4 = 22")
-	assert_vrai(ogre_salle_4.a_un_de(), "L'Ogre a un dé")
-	assert_egal(ogre_salle_4.faces[0].attaque, ogre_normal.faces[0].attaque + 1, "La face 0 de l'Ogre a bien +1 attaque")
+	# Étage 4 : premier Bandit
+	var bandit4 := EtatPartie.ennemi_pour_etage(4)
+	assert_vrai(bandit4.nom.begins_with("Bandit"), "Étage 4 = Bandit")
+	
+	# Étage 7 : premier Ogre
+	var ogre7 := EtatPartie.ennemi_pour_etage(7)
+	assert_vrai(ogre7.nom.begins_with("Ogre"), "Étage 7 = Ogre")
+	assert_vrai(ogre7.a_un_de(), "L'Ogre a un dé")
+	
+	# Étage 10 : Boss
+	var boss := EtatPartie.ennemi_pour_etage(10)
+	assert_egal(boss.nom, "☠ Seigneur des Dés", "Étage 10 = Boss final")
+	assert_egal(boss.pv_max, 40, "Le Boss a 40 PV")
+
 
 
 func test_victoire_et_recompenses() -> void:

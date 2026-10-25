@@ -17,6 +17,7 @@ signal or_salle_change(montant: int)
 signal poison_change(valeur: int)
 signal combat_termine(victoire: bool)
 signal tour_joueur_pret
+signal relance_disponible(disponible: bool)
 
 const DELAI_LANCER_SEC: float = 0.55
 const DELAI_RIPOSTE_SEC: float = 0.75
@@ -33,6 +34,7 @@ var des_joueur: Array[De] = []
 var de_joueur: De = De.new()
 var ennemi: Ennemi
 var _derniere_etait_or: bool = false
+var relance_utilisee: bool = false  ## Devient true quand le joueur a relancé ce tour
 
 
 func demarrer_combat() -> void:
@@ -47,6 +49,7 @@ func demarrer_combat() -> void:
 	or_salle = 0
 	poison_ennemi = 0
 	_derniere_etait_or = false
+	relance_utilisee = false
 	etat = EtatCombat.TOUR_JOUEUR
 	combat_demarre.emit()
 	pv_joueur_change.emit(pv_joueur, pv_max_joueur)
@@ -54,6 +57,7 @@ func demarrer_combat() -> void:
 	bouclier_change.emit(bouclier_joueur)
 	or_salle_change.emit(or_salle)
 	poison_change.emit(poison_ennemi)
+	relance_disponible.emit(true)
 
 
 func est_actif() -> bool:
@@ -91,6 +95,9 @@ func lancer_de_joueur() -> void:
 		etat = EtatCombat.TOUR_JOUEUR
 		tour_joueur_pret.emit()
 		return
+	# Nouveau tour : la relance manuelle est réinitialisée
+	relance_utilisee = false
+	relance_disponible.emit(true)
 	etat = EtatCombat.RIPOSTE_ENNEMI
 	_appliquer_poison()
 	if etat == EtatCombat.VICTOIRE:
@@ -103,6 +110,40 @@ func lancer_de_joueur() -> void:
 	if not is_inside_tree() or etat != EtatCombat.RIPOSTE_ENNEMI:
 		return
 	_infliger_degats_joueur(degats)
+
+
+## Relance manuelle : le joueur choisit quels dés relancer (liste d'indices).
+## Cette action n'entraîne PAS de riposte ce tour-ci.
+func relancer_des(indices_a_relancer: Array) -> void:
+	if etat != EtatCombat.TOUR_JOUEUR or relance_utilisee:
+		return
+	relance_utilisee = true
+	relance_disponible.emit(false)
+	etat = EtatCombat.LANCER_EN_COURS
+	var faces_obtenues: Array[Face] = []
+	var indices_obtenus: Array[int] = []
+	for i in range(des_joueur.size()):
+		if i in indices_a_relancer:
+			var face: Face = des_joueur[i].lancer(EtatPartie.rng)
+			faces_obtenues.append(face)
+			indices_obtenus.append(des_joueur[i].dernier_index)
+		else:
+			# Dé conservé : on réémet son ancienne face
+			faces_obtenues.append(des_joueur[i].derniere_face)
+			indices_obtenus.append(des_joueur[i].dernier_index)
+	des_lances.emit(faces_obtenues, indices_obtenus)
+	if not faces_obtenues.is_empty():
+		de_lance.emit(faces_obtenues[0], indices_obtenus[0])
+	await get_tree().create_timer(DELAI_LANCER_SEC).timeout
+	if not is_inside_tree() or etat != EtatCombat.LANCER_EN_COURS:
+		return
+	for face in faces_obtenues:
+		_appliquer_face(face)
+		if etat == EtatCombat.VICTOIRE:
+			return
+	# Pas de riposte après une relance — juste retour au tour joueur
+	etat = EtatCombat.TOUR_JOUEUR
+	tour_joueur_pret.emit()
 
 
 func _appliquer_face(face: Face) -> bool:

@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=6 format=3]
+[gd_resource type="Theme" load_steps=8 format=3]
 
 [sub_resource type="StyleBoxFlat" id="btn_normal"]
 bg_color = Color(0.22, 0.28, 0.42, 1)
@@ -65,6 +65,25 @@ content_margin_top = 10.0
 content_margin_right = 12.0
 content_margin_bottom = 10.0
 
+[sub_resource type="StyleBoxFlat" id="pb_bg"]
+bg_color = Color(0.1, 0.12, 0.16, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.28, 0.38, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="pb_fill"]
+bg_color = Color(0.85, 0.28, 0.32, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [resource]
 default_font_size = 16
 Button/colors/font_color = Color(0.95, 0.96, 0.98, 1)
@@ -76,3 +95,5 @@ Button/styles/normal = SubResource("btn_normal")
 Button/styles/pressed = SubResource("btn_pressed")
 Label/colors/font_color = Color(0.92, 0.93, 0.96, 1)
 PanelContainer/styles/panel = SubResource("panel")
+ProgressBar/styles/background = SubResource("pb_bg")
+ProgressBar/styles/fill = SubResource("pb_fill")

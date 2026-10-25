@@ -19,20 +19,45 @@ func rafraichir_faces(index_actif: int = -1) -> void:
 	if _faces_box == null:
 		return
 	for enfant in _faces_box.get_children():
+		_faces_box.remove_child(enfant)
 		enfant.queue_free()
 	if EtatPartie.de_joueur == null:
 		return
 	var faces: Array[Face] = EtatPartie.de_joueur.faces
 	for i in faces.size():
-		var chip := Label.new()
-		chip.text = " %d:%s " % [i + 1, _resume(faces[i])]
-		chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var chip := PanelContainer.new()
+		var label := Label.new()
+		label.text = "%d:%s" % [i + 1, _resume(faces[i])]
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		chip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		
+		var face := faces[i]
+		var col_fond := _couleur_pour(face)
+		var style := StyleBoxFlat.new()
+		style.set_corner_radius_all(6)
+		style.content_margin_left = 6.0
+		style.content_margin_right = 6.0
+		style.content_margin_top = 4.0
+		style.content_margin_bottom = 4.0
+		style.bg_color = Color(col_fond.r * 0.35, col_fond.g * 0.35, col_fond.b * 0.35, 0.9)
+		
 		if i == index_actif:
-			chip.modulate = Color(1.0, 0.85, 0.35, 1)
+			style.border_width_left = 2
+			style.border_width_right = 2
+			style.border_width_top = 2
+			style.border_width_bottom = 2
+			style.border_color = Color(1.0, 0.88, 0.4, 1.0)
+			label.modulate = Color(1.0, 0.95, 0.6, 1.0)
 		else:
-			chip.modulate = Color(0.75, 0.82, 0.95, 1)
+			style.border_width_left = 1
+			style.border_width_right = 1
+			style.border_width_top = 1
+			style.border_width_bottom = 1
+			style.border_color = Color(col_fond.r, col_fond.g, col_fond.b, 0.5)
+			label.modulate = Color(0.85, 0.88, 0.95, 1.0)
+			
+		chip.add_theme_stylebox_override("panel", style)
+		chip.add_child(label)
 		_faces_box.add_child(chip)
 
 
@@ -42,6 +67,9 @@ func animer_lancer(face: Face, index: int) -> void:
 	_tween = create_tween()
 	_cube.pivot_offset = _cube.size / 2.0
 	_cube.rotation_degrees = 0.0
+	_cube.scale = Vector2.ONE
+	
+	_tween.parallel().tween_property(_cube, "scale", Vector2(0.92, 0.92), 0.1)
 	for i in 6:
 		_tween.tween_property(_cube, "rotation_degrees", (i + 1) * 60.0, 0.07)
 		_tween.tween_callback(_afficher_face_aleatoire)
@@ -49,6 +77,8 @@ func animer_lancer(face: Face, index: int) -> void:
 		_cube.rotation_degrees = 0.0
 		_afficher(face, index)
 	)
+	_tween.tween_property(_cube, "scale", Vector2(1.18, 1.18), 0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_tween.tween_property(_cube, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _afficher_face_aleatoire() -> void:

@@ -23,7 +23,8 @@ const SOIN_FORGE: int = 3
 const TAILLE_OFFRE: int = 6
 
 var phase: Phase = Phase.TITRE
-var de_joueur: De = De.new()
+var des_joueur: Array[De] = [De.new(), De.new()]
+var de_joueur: De = des_joueur[0]
 var or_total: int = OR_DE_DEPART
 var eclats: int = ECLATS_DE_DEPART
 var pv_joueur: int = PV_MAX_JOUEUR
@@ -50,7 +51,8 @@ func nouvelle_partie() -> void:
 func reinitialiser() -> void:
 	phase = Phase.TITRE
 	rng.randomize()
-	de_joueur = De.new()
+	des_joueur = [De.new(), De.new()]
+	de_joueur = des_joueur[0]
 	or_total = OR_DE_DEPART
 	eclats = ECLATS_DE_DEPART
 	pv_joueur = PV_MAX_JOUEUR

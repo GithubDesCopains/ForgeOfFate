@@ -30,6 +30,7 @@ var _dernier_or_salle: int = -1
 
 func _ready() -> void:
 	_combat.de_lance.connect(_on_de_lance)
+	_combat.des_lances.connect(_on_des_lances)
 	_combat.riposte_annonce.connect(_on_riposte_annonce)
 	_combat.degats_infliges.connect(_on_degats_infliges)
 	_combat.pv_joueur_change.connect(_on_pv_joueur_change)
@@ -43,6 +44,7 @@ func _ready() -> void:
 	EtatPartie.eclats_change.connect(_on_eclats_change)
 
 	_bouton_lancer.pressed.connect(_on_bouton_lancer)
+	_bouton_lancer.text = "Lancer les dés"
 	_bouton_forge.pressed.connect(_on_bouton_forge_presse)
 	_bouton_titre.pressed.connect(_on_bouton_titre_presse)
 
@@ -53,7 +55,7 @@ func _ready() -> void:
 	_rafraichir_entete()
 	if EtatPartie.ennemi_actuel:
 		_ennemi_nom.text = EtatPartie.ennemi_actuel.nom
-	_vue_de.rafraichir_faces(-1)
+	_vue_de.rafraichir_toutes_faces([-1, -1])
 	_combat.demarrer_combat()
 	_maj_bouton_lancer()
 
@@ -89,6 +91,18 @@ func _on_de_lance(face: Face, index: int) -> void:
 	if face.special == Face.Special.RELANCER:
 		_riposte.text = "Relance : pas de riposte ce tour."
 	_vue_de.animer_lancer(face, index)
+
+
+func _on_des_lances(faces: Array[Face], indices: Array[int]) -> void:
+	var morceaux: PackedStringArray = []
+	for i in faces.size():
+		morceaux.append("Dé %d : %s" % [i + 1, str(faces[i])])
+	_resultat_de.text = "  |  ".join(morceaux)
+	
+	for f in faces:
+		if f.special == Face.Special.RELANCER:
+			_riposte.text = "Relance : pas de riposte ce tour."
+	_vue_de.animer_lancers(faces, indices)
 
 
 func _on_riposte_annonce(nom_ennemi: String, degats: int, face: Face) -> void:

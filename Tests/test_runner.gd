@@ -49,8 +49,21 @@ func assert_egal(actuel, attendu, nom_test: String) -> void:
 
 func test_de_et_faces() -> void:
 	print("\n--- Test 1 : Dé et Faces ---")
+	assert_egal(EtatPartie.des_joueur.size(), 2, "Le joueur possède bien 2 dés en début de partie")
+	
 	var de := De.new()
 	assert_egal(de.faces.size(), 6, "Le dé possède bien 6 faces de départ")
+	
+	# Vérification des 6 faces standard
+	assert_egal(de.faces[0].attaque, 1, "Face 1 : 1 Dégât")
+	assert_egal(de.faces[0].or_gain, 0, "Face 1 : 0 Or")
+	assert_egal(de.faces[1].attaque, 2, "Face 2 : 2 Dégâts")
+	assert_egal(de.faces[2].attaque, 1, "Face 3 : 1 Dégât")
+	assert_egal(de.faces[2].or_gain, 1, "Face 3 : 1 Or")
+	assert_egal(de.faces[3].defense, 1, "Face 4 : 1 Bouclier")
+	assert_egal(de.faces[4].defense, 2, "Face 5 : 2 Boucliers")
+	assert_egal(de.faces[5].defense, 1, "Face 6 : 1 Bouclier")
+	assert_egal(de.faces[5].or_gain, 1, "Face 6 : 1 Or")
 	
 	var face_remplacement := Face.simple(Face.Type.ATTAQUE, 5)
 	var ok := de.remplacer_face(0, face_remplacement)
@@ -63,6 +76,7 @@ func test_ennemi_scaling() -> void:
 	var gobelin := EtatPartie.ennemi_pour_etage(1)
 	assert_egal(gobelin.nom, "Gobelin", "Étage 1 = Gobelin")
 	assert_egal(gobelin.pv_max, 8, "PV Gobelin = 8")
+	assert_egal(gobelin.degats_riposte, 1, "Dégâts Gobelin = 1 à la fois")
 	
 	var bandit := EtatPartie.ennemi_pour_etage(2)
 	assert_egal(bandit.nom, "Bandit", "Étage 2 = Bandit")

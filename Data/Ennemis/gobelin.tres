@@ -6,6 +6,6 @@
 script = ExtResource("1_ennemi")
 nom = "Gobelin"
 pv_max = 8
-degats_riposte = 2
+degats_riposte = 1
 recompense_or = 2
 recompense_eclats = 1

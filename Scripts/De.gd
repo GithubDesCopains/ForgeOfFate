@@ -17,14 +17,21 @@ func _init(faces_personnalisees: Array[Face] = []) -> void:
 
 
 static func faces_de_depart() -> Array[Face]:
-	return [
-		Face.simple(Face.Type.ATTAQUE, 3),
-		Face.simple(Face.Type.ATTAQUE, 2),
-		Face.simple(Face.Type.DEFENSE, 2),
-		Face.simple(Face.Type.DEFENSE, 2),
-		Face.simple(Face.Type.OR, 2),
-		Face.simple(Face.Type.OR, 1),
-	]
+	var faces: Array[Face] = []
+	# Composition de notre dé de départ standard :
+	# Face 1 : 1 Dégât
+	faces.append(Face.new("attaque", 1, 0))
+	# Face 2 : 2 Dégâts
+	faces.append(Face.new("attaque", 2, 0))
+	# Face 3 : 1 Dégât + 1 Or
+	faces.append(Face.new("attaque", 1, 1))
+	# Face 4 : 1 Bouclier
+	faces.append(Face.new("defense", 1, 0))
+	# Face 5 : 2 Boucliers
+	faces.append(Face.new("defense", 2, 0))
+	# Face 6 : 1 Bouclier + 1 Or
+	faces.append(Face.new("defense", 1, 1))
+	return faces
 
 
 func lancer(rng: RandomNumberGenerator = null) -> Face:

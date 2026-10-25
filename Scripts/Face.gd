@@ -13,6 +13,20 @@ enum Special { AUCUN, DEGATS_DOUBLES_SI_BOUCLIER, OR_SI_PRECEDENT_OR, POISON, RE
 @export var special: Special = Special.AUCUN
 
 
+func _init(p_type: String = "", p_valeur: int = 0, p_or: int = 0) -> void:
+	match p_type.to_lower():
+		"attaque":
+			attaque = p_valeur
+		"defense":
+			defense = p_valeur
+		"soin":
+			soin = p_valeur
+		"or":
+			or_gain = p_valeur
+	if p_or > 0:
+		or_gain = p_or
+
+
 func valeur_de(type_effet: Type) -> int:
 	match type_effet:
 		Type.ATTAQUE:

@@ -7,6 +7,7 @@ enum EtatCombat { INACTIF, TOUR_JOUEUR, LANCER_EN_COURS, RIPOSTE_ENNEMI, VICTOIR
 
 signal combat_demarre
 signal de_lance(face: Face, index: int)
+signal des_lances(faces: Array[Face], indices: Array[int])
 signal riposte_annonce(nom_ennemi: String, degats: int, face: Face)
 signal degats_infliges(cible: String, degats: int)
 signal pv_joueur_change(pv_actuels: int, pv_max: int)
@@ -28,13 +29,15 @@ var pv_max_ennemi: int = 8
 var bouclier_joueur: int = 0
 var or_salle: int = 0
 var poison_ennemi: int = 0
+var des_joueur: Array[De] = []
 var de_joueur: De = De.new()
 var ennemi: Ennemi
 var _derniere_etait_or: bool = false
 
 
 func demarrer_combat() -> void:
-	de_joueur = EtatPartie.de_joueur
+	des_joueur = EtatPartie.des_joueur
+	de_joueur = des_joueur[0] if not des_joueur.is_empty() else De.new()
 	pv_joueur = EtatPartie.pv_joueur
 	pv_max_joueur = EtatPartie.pv_max_joueur
 	bouclier_joueur = EtatPartie.bouclier_joueur
@@ -65,15 +68,26 @@ func lancer_de_joueur() -> void:
 	if etat != EtatCombat.TOUR_JOUEUR:
 		return
 	etat = EtatCombat.LANCER_EN_COURS
-	var face: Face = de_joueur.lancer(EtatPartie.rng)
-	de_lance.emit(face, de_joueur.dernier_index)
+	var faces_obtenues: Array[Face] = []
+	var indices_obtenus: Array[int] = []
+	for de in des_joueur:
+		var face: Face = de.lancer(EtatPartie.rng)
+		faces_obtenues.append(face)
+		indices_obtenus.append(de.dernier_index)
+	des_lances.emit(faces_obtenues, indices_obtenus)
+	if not faces_obtenues.is_empty():
+		de_lance.emit(faces_obtenues[0], indices_obtenus[0])
 	await get_tree().create_timer(DELAI_LANCER_SEC).timeout
 	if not is_inside_tree() or etat != EtatCombat.LANCER_EN_COURS:
 		return
-	var relancer: bool = _appliquer_face(face)
-	if etat == EtatCombat.VICTOIRE:
-		return
-	if relancer:
+	var au_moins_une_relance: bool = false
+	for face in faces_obtenues:
+		var relancer: bool = _appliquer_face(face)
+		if etat == EtatCombat.VICTOIRE:
+			return
+		if relancer:
+			au_moins_une_relance = true
+	if au_moins_une_relance:
 		etat = EtatCombat.TOUR_JOUEUR
 		tour_joueur_pret.emit()
 		return

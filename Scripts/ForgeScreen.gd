@@ -11,6 +11,7 @@ extends Control
 @onready var _bouton_combat: Button = $Marge/VBox/Actions/BoutonCombat
 
 var _index_face_a_remplacer: int = -1
+var _de_actif: int = 0
 var _lignes_de: Array[Control] = []
 
 
@@ -41,7 +42,23 @@ func _reconstruire_de() -> void:
 		_de_list.remove_child(enfant)
 		enfant.queue_free()
 	_lignes_de.clear()
-	var faces: Array[Face] = EtatPartie.de_joueur.faces
+	
+	var des: Array[De] = EtatPartie.des_joueur
+	if des.size() > 1:
+		var onglets := HBoxContainer.new()
+		onglets.add_theme_constant_override("separation", 8)
+		for de_idx in des.size():
+			var btn := Button.new()
+			btn.text = "Dé %d" % (de_idx + 1)
+			if de_idx == _de_actif:
+				btn.text = "★ Dé %d" % (de_idx + 1)
+				btn.modulate = Color(1.0, 0.9, 0.5, 1.0)
+			btn.pressed.connect(_on_selectionner_de.bind(de_idx))
+			onglets.add_child(btn)
+		_de_list.add_child(onglets)
+	
+	var de_courant: De = des[_de_actif] if _de_actif < des.size() else EtatPartie.de_joueur
+	var faces: Array[Face] = de_courant.faces
 	for i in faces.size():
 		var ligne := PanelContainer.new()
 		var wrap := HBoxContainer.new()
@@ -108,10 +125,22 @@ func _on_acheter_presse(offre: OffreForge) -> void:
 	EtatPartie.depenser_eclats(offre.cout_eclats)
 	EtatPartie.consommer_stock(offre)
 	var index: int = _index_face_a_remplacer
-	EtatPartie.de_joueur.remplacer_face(index, offre.face.dupliquer())
+	var des: Array[De] = EtatPartie.des_joueur
+	var de_cible: De = des[_de_actif] if _de_actif < des.size() else EtatPartie.de_joueur
+	de_cible.remplacer_face(index, offre.face.dupliquer())
 	_index_face_a_remplacer = -1
 	_rafraichir()
-	_message.text = "Face %d remplacée par « %s »." % [index + 1, str(offre.face)]
+	if des.size() > 1:
+		_message.text = "Face %d du Dé %d remplacée par « %s »." % [index + 1, _de_actif + 1, str(offre.face)]
+	else:
+		_message.text = "Face %d remplacée par « %s »." % [index + 1, str(offre.face)]
+
+
+func _on_selectionner_de(idx: int) -> void:
+	_de_actif = idx
+	_index_face_a_remplacer = -1
+	_rafraichir()
+	_message.text = "Dé %d sélectionné. Choisissez une face de ce dé à remplacer." % (idx + 1)
 
 
 func _on_remplacer_presse(index: int) -> void:

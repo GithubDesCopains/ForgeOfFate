@@ -1,0 +1,78 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/VictoryScreen.gd" id="1_screen"]
+
+[node name="Victory" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="Fond" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.07, 0.13, 0.11, 1)
+
+[node name="Accent" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 6.0
+grow_horizontal = 2
+color = Color(0.45, 0.78, 0.48, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(560, 0)
+layout_mode = 2
+
+[node name="Marge" type="MarginContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel/Marge"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Titre" type="Label" parent="CenterContainer/Panel/Marge/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 42
+text = "Victoire !"
+horizontal_alignment = 1
+
+[node name="Message" type="Label" parent="CenterContainer/Panel/Marge/VBox"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Félicitations ! Le boss final a été vaincu."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="NouvellePartie" type="Button" parent="CenterContainer/Panel/Marge/VBox"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Nouvelle partie"
+
+[node name="RetourTitre" type="Button" parent="CenterContainer/Panel/Marge/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "Retour au titre"

@@ -1,159 +1,235 @@
 class_name ForgeScreen
 extends Control
 
+const ForgeRules = preload("res://Scripts/Forge.gd")
+
 @onready var _or_label: Label = $Marge/VBox/Ressources/OrLabel
 @onready var _eclats_label: Label = $Marge/VBox/Ressources/EclatsLabel
 @onready var _soin_label: Label = $Marge/VBox/SoinLabel
+@onready var _de_titre: Label = $Marge/VBox/Scroll/Colonnes/DeBox/DeTitre
 @onready var _de_list: VBoxContainer = $Marge/VBox/Scroll/Colonnes/DeBox/DeList
 @onready var _boutique_list: VBoxContainer = $Marge/VBox/Scroll/Colonnes/BoutiqueBox/BoutiqueList
 @onready var _message: Label = $Marge/VBox/Message
 @onready var _bouton_annuler: Button = $Marge/VBox/Actions/BoutonAnnuler
 @onready var _bouton_combat: Button = $Marge/VBox/Actions/BoutonCombat
 
-var _index_face_a_remplacer: int = -1
-var _de_actif: int = 0
-var _lignes_de: Array[Control] = []
+var _index_de_selectionne: int = -1
+var _index_face_selectionnee: int = -1
 
 
 func _ready() -> void:
+	_connecter_signaux()
+	_bouton_annuler.disabled = true
 	_bouton_combat.pressed.connect(_on_bouton_combat_presse)
 	_bouton_annuler.pressed.connect(_on_annuler)
-	_bouton_annuler.disabled = true
-	var nom_ennemi: String = EtatPartie.ennemi_actuel.nom if EtatPartie.ennemi_actuel else "?"
-	_soin_label.text = "Soin : PV %d / %d (+%d). Prochain adversaire : %s." % [
-		EtatPartie.pv_joueur, EtatPartie.pv_max_joueur, EtatPartie.SOIN_FORGE, nom_ennemi
-	]
-	if EtatPartie.offre_forge.is_empty():
-		EtatPartie.regenerer_offre()
-	_message.text = "Sélectionnez une face de votre dé, puis achetez pour la remplacer."
-	_rafraichir()
+
+	if EtatPartie.phase != EtatPartie.Phase.FORGE:
+		_message.text = "La Forge est accessible après une victoire."
+		_actualiser()
+		return
+
+	EtatPartie.preparer_forge()
+	_index_de_selectionne = -1
+	_index_face_selectionnee = -1
+	_message.text = "Sélectionnez un dé, puis une face à remplacer."
+	_actualiser()
 
 
-func _rafraichir() -> void:
+func _connecter_signaux() -> void:
+	if not EtatPartie.or_change.is_connected(_on_or_change):
+		EtatPartie.or_change.connect(_on_or_change)
+	if not EtatPartie.eclats_change.is_connected(_on_eclats_change):
+		EtatPartie.eclats_change.connect(_on_eclats_change)
+	if not EtatPartie.pv_joueur_change.is_connected(_on_pv_change):
+		EtatPartie.pv_joueur_change.connect(_on_pv_change)
+
+
+func _actualiser() -> void:
 	_or_label.text = "Or : %d" % EtatPartie.or_total
 	_eclats_label.text = "Éclats : %d" % EtatPartie.eclats
-	_reconstruire_de()
-	_reconstruire_boutique()
-	_bouton_annuler.disabled = _index_face_a_remplacer < 0
+	_soin_label.text = "PV : %d / %d" % [
+		EtatPartie.pv_joueur,
+		EtatPartie.pv_max_joueur,
+	]
+	_reconstruire_des()
+	_reconstruire_offres()
+	_bouton_annuler.disabled = _index_face_selectionnee < 0
+	_bouton_combat.disabled = EtatPartie.phase != EtatPartie.Phase.FORGE
 
 
-func _reconstruire_de() -> void:
-	for enfant in _de_list.get_children():
-		_de_list.remove_child(enfant)
-		enfant.queue_free()
-	_lignes_de.clear()
-	
-	var des: Array[De] = EtatPartie.des_joueur
-	if des.size() > 1:
-		var onglets := HBoxContainer.new()
-		onglets.add_theme_constant_override("separation", 8)
-		for de_idx in des.size():
-			var btn := Button.new()
-			btn.text = "Dé %d" % (de_idx + 1)
-			if de_idx == _de_actif:
-				btn.text = "★ Dé %d" % (de_idx + 1)
-				btn.modulate = Color(1.0, 0.9, 0.5, 1.0)
-			btn.pressed.connect(_on_selectionner_de.bind(de_idx))
-			onglets.add_child(btn)
-		_de_list.add_child(onglets)
-	
-	var de_courant: De = des[_de_actif] if _de_actif < des.size() else EtatPartie.de_joueur
-	var faces: Array[Face] = de_courant.faces
-	for i in faces.size():
-		var ligne := PanelContainer.new()
-		var wrap := HBoxContainer.new()
-		ligne.add_child(wrap)
-		var label := Label.new()
-		label.text = "Face %d : %s" % [i + 1, str(faces[i])]
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		wrap.add_child(label)
+func _reconstruire_des() -> void:
+	_effacer_enfants(_de_list)
+	_de_titre.text = "Dés du joueur (%d)" % EtatPartie.des_joueur.size()
+
+	var onglets := HBoxContainer.new()
+	onglets.name = "SelectionDes"
+	for index_de in EtatPartie.des_joueur.size():
 		var bouton := Button.new()
-		bouton.text = "Choisir"
-		bouton.pressed.connect(_on_remplacer_presse.bind(i))
-		wrap.add_child(bouton)
-		if i == _index_face_a_remplacer:
-			ligne.modulate = Color(1.15, 0.95, 0.55, 1)
-		_de_list.add_child(ligne)
-		_lignes_de.append(ligne)
+		bouton.name = "De%d" % (index_de + 1)
+		bouton.text = "Dé %d%s" % [
+			index_de + 1,
+			" ✓" if index_de == _index_de_selectionne else "",
+		]
+		bouton.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bouton.pressed.connect(_on_selectionner_de.bind(index_de))
+		onglets.add_child(bouton)
+	_de_list.add_child(onglets)
+
+	for index_face in EtatPartie.des_joueur.size():
+		var de: De = EtatPartie.des_joueur[index_face]
+		if de == null:
+			continue
+		for index in de.faces.size():
+			var ligne := HBoxContainer.new()
+			ligne.name = "De%dFace%d" % [index_face + 1, index + 1]
+			var label := Label.new()
+			label.text = "Face %d : %s" % [index + 1, de.faces[index].donnees]
+			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			ligne.add_child(label)
+
+			var bouton := Button.new()
+			var est_selectionnee: bool = (
+				index_face == _index_de_selectionne
+				and index == _index_face_selectionnee
+			)
+			bouton.text = "Sélectionnée" if est_selectionnee else "Choisir"
+			bouton.disabled = index_face != _index_de_selectionne
+			bouton.pressed.connect(_on_selectionner_face.bind(index))
+			ligne.add_child(bouton)
+			if est_selectionnee:
+				ligne.modulate = Color(1.15, 0.95, 0.55, 1)
+			_de_list.add_child(ligne)
 
 
-func _reconstruire_boutique() -> void:
-	for enfant in _boutique_list.get_children():
-		_boutique_list.remove_child(enfant)
-		enfant.queue_free()
+func _reconstruire_offres() -> void:
+	_effacer_enfants(_boutique_list)
 	for offre in EtatPartie.offre_forge:
+		if offre == null:
+			continue
 		var ligne := HBoxContainer.new()
-		var label := Label.new()
+		ligne.name = "Offre_" + offre.id
+
+		var details := VBoxContainer.new()
+		details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var description := Label.new()
+		description.text = "%s — %s" % [offre.id, offre.face]
+		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		details.add_child(description)
+
+		var stock_restant: int = EtatPartie.stock_de(offre)
 		var prix: String = _texte_prix(offre)
-		var restant: int = EtatPartie.stock_de(offre)
-		label.text = "%s   —   %s   (stock %d)" % [str(offre.face), prix, restant]
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		ligne.add_child(label)
+		var etat_achat: String = _texte_etat_achat(offre, stock_restant)
+		var informations := Label.new()
+		informations.text = "%s | Stock : %d | %s" % [prix, stock_restant, etat_achat]
+		informations.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		details.add_child(informations)
+		ligne.add_child(details)
+
 		var bouton := Button.new()
+		bouton.name = "Acheter_" + offre.id
 		bouton.text = "Acheter"
-		var peut: bool = (
-			_index_face_a_remplacer >= 0
-			and restant > 0
-			and EtatPartie.peut_payer(offre.cout_or, offre.cout_eclats)
+		bouton.disabled = not ForgeRules.peut_acheter_offre(
+			_index_de_selectionne,
+			_index_face_selectionnee,
+			offre
 		)
-		bouton.disabled = not peut
 		bouton.pressed.connect(_on_acheter_presse.bind(offre))
 		ligne.add_child(bouton)
 		_boutique_list.add_child(ligne)
 
 
 func _texte_prix(offre: OffreForge) -> String:
-	if offre.cout_eclats > 0 and offre.cout_or > 0:
-		return "%d or + %d éclat(s)" % [offre.cout_or, offre.cout_eclats]
+	var couts: PackedStringArray = []
+	if offre.cout_or > 0:
+		couts.append("%d or" % offre.cout_or)
 	if offre.cout_eclats > 0:
-		return "%d éclat(s)" % offre.cout_eclats
-	return "%d or" % offre.cout_or
+		couts.append("%d éclat(s)" % offre.cout_eclats)
+	if couts.is_empty():
+		return "Gratuit"
+	return " + ".join(couts)
+
+
+func _texte_etat_achat(offre: OffreForge, stock_restant: int) -> String:
+	if _index_de_selectionne < 0 or _index_face_selectionnee < 0:
+		return "Choisissez un dé et une face"
+	if stock_restant <= 0:
+		return "Épuisée"
+	if not ForgeRules.peut_acheter_offre(
+			_index_de_selectionne,
+			_index_face_selectionnee,
+			offre
+	):
+		return "Ressources insuffisantes ou offre invalide"
+	return "Disponible"
+
+
+func _effacer_enfants(parent: Node) -> void:
+	for enfant in parent.get_children():
+		parent.remove_child(enfant)
+		enfant.queue_free()
+
+
+func _on_selectionner_de(index_de: int) -> void:
+	if index_de < 0 or index_de >= EtatPartie.des_joueur.size():
+		return
+	_index_de_selectionne = index_de
+	_index_face_selectionnee = -1
+	_message.text = "Dé %d sélectionné. Choisissez une face à remplacer." % (index_de + 1)
+	_actualiser()
+
+
+func _on_selectionner_face(index_face: int) -> void:
+	if _index_de_selectionne < 0 or _index_de_selectionne >= EtatPartie.des_joueur.size():
+		return
+	var de: De = EtatPartie.des_joueur[_index_de_selectionne]
+	if index_face < 0 or index_face >= de.faces.size():
+		return
+	_index_face_selectionnee = index_face
+	_message.text = "Face %d du dé %d sélectionnée." % [
+		index_face + 1,
+		_index_de_selectionne + 1,
+	]
+	_actualiser()
 
 
 func _on_acheter_presse(offre: OffreForge) -> void:
-	if _index_face_a_remplacer < 0:
-		_message.text = "Sélectionnez d'abord la face de votre dé à remplacer."
+	if not ForgeRules.acheter_offre(
+			_index_de_selectionne,
+			_index_face_selectionnee,
+			offre
+	):
+		_message.text = "Achat refusé : vérifiez la sélection, le stock et vos ressources."
+		_actualiser()
 		return
-	if EtatPartie.stock_de(offre) <= 0:
-		_message.text = "Rupture de stock."
-		return
-	if not EtatPartie.peut_payer(offre.cout_or, offre.cout_eclats):
-		_message.text = "Ressources insuffisantes (%s)." % _texte_prix(offre)
-		return
-	EtatPartie.depenser_or(offre.cout_or)
-	EtatPartie.depenser_eclats(offre.cout_eclats)
-	EtatPartie.consommer_stock(offre)
-	var index: int = _index_face_a_remplacer
-	var des: Array[De] = EtatPartie.des_joueur
-	var de_cible: De = des[_de_actif] if _de_actif < des.size() else EtatPartie.de_joueur
-	de_cible.remplacer_face(index, offre.face.dupliquer())
-	_index_face_a_remplacer = -1
-	_rafraichir()
-	if des.size() > 1:
-		_message.text = "Face %d du Dé %d remplacée par « %s »." % [index + 1, _de_actif + 1, str(offre.face)]
-	else:
-		_message.text = "Face %d remplacée par « %s »." % [index + 1, str(offre.face)]
 
-
-func _on_selectionner_de(idx: int) -> void:
-	_de_actif = idx
-	_index_face_a_remplacer = -1
-	_rafraichir()
-	_message.text = "Dé %d sélectionné. Choisissez une face de ce dé à remplacer." % (idx + 1)
-
-
-func _on_remplacer_presse(index: int) -> void:
-	_index_face_a_remplacer = index
-	_rafraichir()
-	_message.text = "Face %d sélectionnée. Choisissez une offre, ou Annuler." % (index + 1)
+	_message.text = "Face remplacée par « %s »." % offre.face
+	_actualiser()
 
 
 func _on_annuler() -> void:
-	_index_face_a_remplacer = -1
-	_rafraichir()
-	_message.text = "Sélection annulée. Choisissez une face de votre dé."
+	_index_de_selectionne = -1
+	_index_face_selectionnee = -1
+	_message.text = "Sélection annulée."
+	_actualiser()
 
 
 func _on_bouton_combat_presse() -> void:
+	if EtatPartie.phase != EtatPartie.Phase.FORGE:
+		_message.text = "Impossible de démarrer un combat depuis cette phase."
+		return
 	EtatPartie.aller_au_combat()
+
+
+func _on_or_change(total: int) -> void:
+	_or_label.text = "Or : %d" % total
+	_reconstruire_offres()
+
+
+func _on_eclats_change(total: int) -> void:
+	_eclats_label.text = "Éclats : %d" % total
+	_reconstruire_offres()
+
+
+func _on_pv_change(pv_actuels: int, pv_max: int) -> void:
+	_soin_label.text = "PV : %d / %d" % [pv_actuels, pv_max]

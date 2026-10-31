@@ -1,7 +1,7 @@
-class_name Face
+class_name FaceData
 extends Resource
 
-## Face de dé sérialisable (.tres) : effets de base + un effet spécial optionnel.
+## Face de dé sérialisable : effets de base et effet spécial optionnel.
 
 enum Type { ATTAQUE, DEFENSE, OR, SOIN }
 enum Special { AUCUN, DEGATS_DOUBLES_SI_BOUCLIER, OR_SI_PRECEDENT_OR, POISON, RELANCER }
@@ -44,12 +44,12 @@ func a_or() -> bool:
 	return or_gain > 0
 
 
-func dupliquer() -> Face:
-	return duplicate() as Face
+func dupliquer() -> FaceData:
+	return duplicate() as FaceData
 
 
-static func simple(type_effet: Type, valeur: int) -> Face:
-	var face := Face.new()
+static func simple(type_effet: Type, valeur: int) -> FaceData:
+	var face := FaceData.new()
 	match type_effet:
 		Type.ATTAQUE:
 			face.attaque = valeur
@@ -62,8 +62,8 @@ static func simple(type_effet: Type, valeur: int) -> Face:
 	return face
 
 
-static func combinee(effets_voulus: Dictionary) -> Face:
-	var face := Face.new()
+static func combinee(effets_voulus: Dictionary) -> FaceData:
+	var face := FaceData.new()
 	for type_effet in effets_voulus:
 		var valeur: int = effets_voulus[type_effet]
 		match type_effet:

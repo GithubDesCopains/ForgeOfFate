@@ -23,4 +23,4 @@ pv_max = 12
 degats_riposte = 3
 recompense_or = 3
 recompense_eclats = 1
-faces = Array[Face]([SubResource("face_a"), SubResource("face_b"), SubResource("face_c")])
+faces = Array[FaceData]([SubResource("face_a"), SubResource("face_b"), SubResource("face_c")])

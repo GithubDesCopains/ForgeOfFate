@@ -1,14 +1,48 @@
 class_name De
 extends RefCounted
 
-## Dé de dice-crafting : 6 faces, remplacement (ajouter une face = relique rare).
+enum FaceType { ATTAQUE, DEFENSE, OR }
 
-const NB_FACES_MAX: int = 6
+class Face:
+	var type: FaceType = FaceType.ATTAQUE
+	var valeur: int = 0
+	var donnees: FaceData
+
+	func _init(p_type: FaceType = FaceType.ATTAQUE, p_valeur: int = 0) -> void:
+		type = p_type
+		valeur = p_valeur
+		donnees = FaceData.new()
+		match type:
+			FaceType.ATTAQUE:
+				donnees.attaque = valeur
+			FaceType.DEFENSE:
+				donnees.defense = valeur
+			FaceType.OR:
+				donnees.or_gain = valeur
+
+	static func depuis_donnees(face_data: FaceData) -> Face:
+		assert(face_data != null, "Les données de face ne peuvent pas être nulles.")
+		var face := Face.new()
+		face.donnees = face_data.dupliquer()
+		# type/valeur exposent l'effet principal, donnees conserve la face complète.
+		if face_data.attaque > 0:
+			face.type = FaceType.ATTAQUE
+			face.valeur = face_data.attaque
+		elif face_data.defense > 0:
+			face.type = FaceType.DEFENSE
+			face.valeur = face_data.defense
+		elif face_data.or_gain > 0:
+			face.type = FaceType.OR
+			face.valeur = face_data.or_gain
+		return face
+
+	func comme_donnees() -> FaceData:
+		return donnees.dupliquer()
+
+	func dupliquer() -> Face:
+		return Face.depuis_donnees(donnees)
 
 var faces: Array[Face] = []
-var dernier_index: int = -1
-var derniere_face: Face = null  ## Dernière face obtenue (utile pour la relance partielle)
-
 
 func _init(faces_personnalisees: Array[Face] = []) -> void:
 	if faces_personnalisees.is_empty():
@@ -17,54 +51,40 @@ func _init(faces_personnalisees: Array[Face] = []) -> void:
 		faces = faces_personnalisees.duplicate()
 
 
-static func faces_de_depart() -> Array[Face]:
-	var faces: Array[Face] = []
-	# Composition de notre dé de départ standard :
-	# Face 1 : 1 Dégât
-	faces.append(Face.new("attaque", 1, 0))
-	# Face 2 : 2 Dégâts
-	faces.append(Face.new("attaque", 2, 0))
-	# Face 3 : 1 Dégât + 1 Or
-	faces.append(Face.new("attaque", 1, 1))
-	# Face 4 : 1 Bouclier
-	faces.append(Face.new("defense", 1, 0))
-	# Face 5 : 2 Boucliers
-	faces.append(Face.new("defense", 2, 0))
-	# Face 6 : 1 Bouclier + 1 Or
-	faces.append(Face.new("defense", 1, 1))
-	return faces
+static func depuis_faces_data(faces_data: Array[FaceData]) -> De:
+	assert(not faces_data.is_empty(), "La liste de faces du dé ne peut pas être vide.")
+	var faces_runtime: Array[Face] = []
+	for face_data in faces_data:
+		faces_runtime.append(Face.depuis_donnees(face_data))
+	return De.new(faces_runtime)
 
+
+static func faces_de_depart() -> Array[Face]:
+	return [
+		Face.new(FaceType.ATTAQUE, 2),
+		Face.new(FaceType.ATTAQUE, 2),
+		Face.new(FaceType.DEFENSE, 2),
+		Face.new(FaceType.DEFENSE, 2),
+		Face.new(FaceType.OR, 1),
+		Face.new(FaceType.OR, 1),
+	]
+
+func remplacer_face(index: int, face: Face) -> bool:
+	if face == null or index < 0 or index >= faces.size():
+		return false
+	faces[index] = face.dupliquer()
+	return true
 
 func lancer(rng: RandomNumberGenerator = null) -> Face:
 	assert(not faces.is_empty(), "Le dé doit posséder au moins une face.")
-	if rng == null:
-		dernier_index = randi() % faces.size()
-	else:
-		dernier_index = rng.randi() % faces.size()
-	derniere_face = faces[dernier_index]
-	return derniere_face
+	var index: int = randi() % faces.size()
+	if rng != null:
+		index = rng.randi_range(0, faces.size() - 1)
+	return faces[index]
 
-
-func peut_ajouter_face() -> bool:
-	return faces.size() < NB_FACES_MAX
-
-
-func ajouter_face(face: Face) -> bool:
-	if not peut_ajouter_face():
-		return false
-	faces.append(face)
-	return true
-
-
-func remplacer_face(index: int, face: Face) -> bool:
-	if index < 0 or index >= faces.size():
-		return false
-	faces[index] = face
-	return true
-
-
-func dupliquer() -> De:
-	var copies: Array[Face] = []
-	for f in faces:
-		copies.append(f.dupliquer())
-	return De.new(copies)
+static func nom_type(type_face: FaceType) -> String:
+	match type_face:
+		FaceType.ATTAQUE: return "Attaque"
+		FaceType.DEFENSE: return "Défense"
+		FaceType.OR: return "Or"
+	return "?"

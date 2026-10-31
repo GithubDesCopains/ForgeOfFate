@@ -1,247 +1,166 @@
 class_name CombatScreen
 extends Control
 
-@onready var _salle: Label = $Marge/VBox/Entete/Salle
-@onready var _or_bourse: Label = $Marge/VBox/Entete/OrBourse
-@onready var _eclats: Label = $Marge/VBox/Entete/Eclats
-@onready var _ennemi_nom: Label = $Marge/VBox/Colonnes/EnnemiBox/EnnemiInner/EnnemiNom
-@onready var _ennemi_pv: Label = $Marge/VBox/Colonnes/EnnemiBox/EnnemiInner/EnnemiPV
-@onready var _poison: Label = $Marge/VBox/Colonnes/EnnemiBox/EnnemiInner/Poison
-@onready var _vue_de: VueDe = $Marge/VBox/Colonnes/CentreBox/VueDe
-@onready var _resultat_de: Label = $Marge/VBox/Colonnes/CentreBox/ResultatDe
-@onready var _riposte: Label = $Marge/VBox/Colonnes/CentreBox/Riposte
-@onready var _joueur_pv: Label = $Marge/VBox/Colonnes/JoueurBox/JoueurInner/JoueurPV
-@onready var _bouclier: Label = $Marge/VBox/Colonnes/JoueurBox/JoueurInner/Bouclier
-@onready var _or_salle: Label = $Marge/VBox/Colonnes/JoueurBox/JoueurInner/OrSalle
-@onready var _ennemi_box: PanelContainer = $Marge/VBox/Colonnes/EnnemiBox
-@onready var _joueur_box: PanelContainer = $Marge/VBox/Colonnes/JoueurBox
-@onready var _ennemi_pv_bar: ProgressBar = $Marge/VBox/Colonnes/EnnemiBox/EnnemiInner/EnnemiPVBar
-@onready var _joueur_pv_bar: ProgressBar = $Marge/VBox/Colonnes/JoueurBox/JoueurInner/JoueurPVBar
-@onready var _bouton_lancer: Button = $Marge/VBox/BoutonLancer
-@onready var _bouton_relancer: Button = $Marge/VBox/BoutonRelancer
-@onready var _bouton_forge: Button = $Marge/VBox/BoutonForge
-@onready var _bouton_titre: Button = $Marge/VBox/BoutonTitre
-@onready var _message_fin: Label = $Marge/VBox/MessageFin
-@onready var _combat: CombatManager = $CombatManager
+const SCENE_FORGE: String = "res://Scenes/Forge.tscn"
+const SCRIPT_FORGE: String = "res://Scripts/ForgeScreen.gd"
 
-var _dernier_pv_joueur: int = -1
-var _dernier_bouclier: int = -1
-var _dernier_or_salle: int = -1
-var _relance_dispo: bool = false  ## True si la relance manuelle est disponible ce tour
+@onready var combat_manager: CombatManager = $CombatManager
+@onready var label_pv_joueur: Label = $CenterContainer/VBoxContainer/JoueurPV
+@onready var label_pv_ennemi: Label = $CenterContainer/VBoxContainer/EnnemiPV
+@onready var label_bouclier: Label = $CenterContainer/VBoxContainer/Bouclier
+@onready var label_resultat: Label = $CenterContainer/VBoxContainer/ResultatDe
+@onready var label_or: Label = $CenterContainer/VBoxContainer/OrSalle
+@onready var label_message: Label = $CenterContainer/VBoxContainer/MessageCombat
+@onready var bouton_lancer: Button = $CenterContainer/VBoxContainer/BoutonLancer
+@onready var bouton_forge: Button = $CenterContainer/VBoxContainer/BoutonForge
+
+var _combat_initialise: bool = false
+var _forge_disponible: bool = false
 
 
 func _ready() -> void:
-	_combat.de_lance.connect(_on_de_lance)
-	_combat.des_lances.connect(_on_des_lances)
-	_combat.riposte_annonce.connect(_on_riposte_annonce)
-	_combat.degats_infliges.connect(_on_degats_infliges)
-	_combat.pv_joueur_change.connect(_on_pv_joueur_change)
-	_combat.pv_ennemi_change.connect(_on_pv_ennemi_change)
-	_combat.bouclier_change.connect(_on_bouclier_change)
-	_combat.or_salle_change.connect(_on_or_salle_change)
-	_combat.poison_change.connect(_on_poison_change)
-	_combat.combat_termine.connect(_on_combat_termine)
-	_combat.tour_joueur_pret.connect(_maj_bouton_lancer)
-	_combat.relance_disponible.connect(_on_relance_disponible)
-	EtatPartie.or_change.connect(_on_or_bourse_change)
-	EtatPartie.eclats_change.connect(_on_eclats_change)
-
-	_bouton_lancer.pressed.connect(_on_bouton_lancer)
-	_bouton_lancer.text = "🎲 Lancer les dés"
-	_bouton_relancer.pressed.connect(_on_bouton_relancer)
-	_bouton_relancer.text = "🔄 Relancer (1/tour)"
-	_bouton_forge.pressed.connect(_on_bouton_forge_presse)
-	_bouton_titre.pressed.connect(_on_bouton_titre_presse)
-
-	_bouton_forge.visible = false
-	_bouton_titre.visible = false
-	_bouton_relancer.visible = false
-	_poison.visible = false
-	_riposte.text = ""
-	_rafraichir_entete()
-	if EtatPartie.ennemi_actuel:
-		_ennemi_nom.text = EtatPartie.ennemi_actuel.nom
-	_vue_de.rafraichir_toutes_faces([-1, -1])
-	_combat.demarrer_combat()
-	_maj_bouton_lancer()
+	_forge_disponible = (
+		ResourceLoader.exists(SCENE_FORGE)
+		and ResourceLoader.exists(SCRIPT_FORGE)
+	)
+	_connecter_signaux()
+	_initialiser_combat()
 
 
-func _rafraichir_entete() -> void:
-	_salle.text = "Salle %d / %d" % [EtatPartie.etage, EtatPartie.ETAGES_MAX]
-	_or_bourse.text = "Bourse : %d or" % EtatPartie.or_total
-	_eclats.text = "Éclats : %d" % EtatPartie.eclats
+func _connecter_signaux() -> void:
+	if not combat_manager.combat_demarre.is_connected(_on_combat_demarre):
+		combat_manager.combat_demarre.connect(_on_combat_demarre)
+	if not combat_manager.des_lances.is_connected(_on_des_lances):
+		combat_manager.des_lances.connect(_on_des_lances)
+	if not combat_manager.degats_infliges.is_connected(_on_degats_infliges):
+		combat_manager.degats_infliges.connect(_on_degats_infliges)
+	if not combat_manager.pv_joueur_change.is_connected(_on_pv_joueur_change):
+		combat_manager.pv_joueur_change.connect(_on_pv_joueur_change)
+	if not combat_manager.pv_ennemi_change.is_connected(_on_pv_ennemi_change):
+		combat_manager.pv_ennemi_change.connect(_on_pv_ennemi_change)
+	if not combat_manager.bouclier_change.is_connected(_on_bouclier_change):
+		combat_manager.bouclier_change.connect(_on_bouclier_change)
+	if not combat_manager.or_gagne.is_connected(_on_or_gagne):
+		combat_manager.or_gagne.connect(_on_or_gagne)
+	if not combat_manager.combat_termine.is_connected(_on_combat_termine):
+		combat_manager.combat_termine.connect(_on_combat_termine)
+	if not bouton_lancer.pressed.is_connected(_on_bouton_lancer_pressed):
+		bouton_lancer.pressed.connect(_on_bouton_lancer_pressed)
+	if not bouton_forge.pressed.is_connected(_on_bouton_forge_pressed):
+		bouton_forge.pressed.connect(_on_bouton_forge_pressed)
 
 
-func _on_or_bourse_change(_total: int) -> void:
-	_or_bourse.text = "Bourse : %d or" % EtatPartie.or_total
-
-
-func _on_eclats_change(_total: int) -> void:
-	_eclats.text = "Éclats : %d" % EtatPartie.eclats
-
-
-func _on_bouton_lancer() -> void:
-	if not _combat.peut_lancer():
+func _initialiser_combat() -> void:
+	if _combat_initialise:
 		return
-	_bouton_lancer.disabled = true
-	_bouton_relancer.disabled = true
-	_riposte.text = ""
-	_combat.lancer_de_joueur()
+	_combat_initialise = true
+	combat_manager.demarrer_combat()
+
+	if combat_manager.etat == CombatManager.EtatCombat.INACTIF:
+		label_message.text = "Le combat n'a pas pu démarrer."
 
 
-func _on_bouton_relancer() -> void:
-	if not _combat.peut_lancer() or not _relance_dispo:
+func _on_combat_demarre() -> void:
+	label_message.text = "Combat commencé."
+	_actualiser_actions()
+
+
+func _on_bouton_lancer_pressed() -> void:
+	if not combat_manager.peut_lancer():
 		return
-	_bouton_lancer.disabled = true
-	_bouton_relancer.disabled = true
-	_riposte.text = "Relance — pas de riposte ce tour !"
-	# On relance tous les dés par défaut (simple pour l'instant)
-	var indices: Array = range(_combat.des_joueur.size())
-	_combat.relancer_des(indices)
+	bouton_lancer.disabled = true
+	combat_manager.lancer_de_joueur()
+	_actualiser_actions()
 
 
-func _on_relance_disponible(disponible: bool) -> void:
-	_relance_dispo = disponible
-	_bouton_relancer.visible = disponible
-	_bouton_relancer.disabled = not disponible
-	if disponible:
-		_creer_popup("🔄 Relance dispo !", Color(0.4, 0.9, 1.0, 1.0),
-				_joueur_box.global_position + _joueur_box.size / 2.0)
-
-
-func _maj_bouton_lancer() -> void:
-	_bouton_lancer.disabled = not _combat.peut_lancer()
-	_bouton_relancer.disabled = not (_combat.peut_lancer() and _relance_dispo)
-
-
-func _on_de_lance(face: Face, index: int) -> void:
-	_resultat_de.text = "Face : %s" % str(face)
-	if face.special == Face.Special.RELANCER:
-		_riposte.text = "Relance : pas de riposte ce tour."
-	_vue_de.animer_lancer(face, index)
-
-
-func _on_des_lances(faces: Array[Face], indices: Array[int]) -> void:
-	var morceaux: PackedStringArray = []
+func _on_des_lances(faces: Array[De.Face]) -> void:
+	var resultats: PackedStringArray = []
 	for i in faces.size():
-		morceaux.append("Dé %d : %s" % [i + 1, str(faces[i])])
-	_resultat_de.text = "  |  ".join(morceaux)
-	
-	for f in faces:
-		if f.special == Face.Special.RELANCER:
-			_riposte.text = "Relance : pas de riposte ce tour."
-	_vue_de.animer_lancers(faces, indices)
-
-
-func _on_riposte_annonce(nom_ennemi: String, degats: int, face: Face) -> void:
-	if face != null:
-		_riposte.text = "%s lance %s  →  %d dégâts" % [nom_ennemi, str(face), degats]
-	else:
-		_riposte.text = "%s riposte : %d dégâts" % [nom_ennemi, degats]
+		var face: De.Face = faces[i]
+		if face == null or face.donnees == null:
+			resultats.append("Dé %d : face invalide" % (i + 1))
+		else:
+			resultats.append("Dé %d : %s" % [i + 1, face.donnees])
+	label_resultat.text = "Résultats : %s" % " | ".join(resultats)
 
 
 func _on_degats_infliges(cible: String, degats: int) -> void:
-	if degats <= 0:
-		return
-	if cible == "ennemi":
-		var pos_centre: Vector2 = _ennemi_box.global_position + _ennemi_box.size / 2.0
-		_creer_popup("-%d" % degats, Color(1.0, 0.35, 0.35, 1.0), pos_centre)
-		_secouer_et_flasher(_ennemi_box, Color(1.8, 0.4, 0.4, 1.0))
-	elif cible == "joueur":
-		var pos_centre: Vector2 = _joueur_box.global_position + _joueur_box.size / 2.0
-		_creer_popup("-%d" % degats, Color(1.0, 0.35, 0.35, 1.0), pos_centre)
-		_secouer_et_flasher(_joueur_box, Color(1.8, 0.4, 0.4, 1.0))
+	if cible == "joueur":
+		label_message.text = "Riposte ennemie : %d dégâts reçus." % degats
+	elif cible == "ennemi":
+		label_message.text = "Vous infligez %d dégâts." % degats
 
 
 func _on_pv_joueur_change(pv_actuels: int, pv_max: int) -> void:
-	_joueur_pv.text = "PV : %d / %d" % [pv_actuels, pv_max]
-	_joueur_pv_bar.max_value = pv_max
-	var tw := create_tween()
-	tw.tween_property(_joueur_pv_bar, "value", float(pv_actuels), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	if _dernier_pv_joueur >= 0 and pv_actuels > _dernier_pv_joueur:
-		var soin: int = pv_actuels - _dernier_pv_joueur
-		var pos_centre: Vector2 = _joueur_box.global_position + _joueur_box.size / 2.0
-		_creer_popup("+%d PV" % soin, Color(0.35, 1.0, 0.45, 1.0), pos_centre)
-		_secouer_et_flasher(_joueur_box, Color(0.4, 1.8, 0.5, 1.0))
-	_dernier_pv_joueur = pv_actuels
+	label_pv_joueur.text = "PV joueur : %d / %d" % [pv_actuels, pv_max]
 
 
 func _on_pv_ennemi_change(pv_actuels: int, pv_max: int) -> void:
-	_ennemi_pv.text = "PV : %d / %d" % [pv_actuels, pv_max]
-	_ennemi_pv_bar.max_value = pv_max
-	var tw := create_tween()
-	tw.tween_property(_ennemi_pv_bar, "value", float(pv_actuels), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	label_pv_ennemi.text = "PV ennemi : %d / %d" % [pv_actuels, pv_max]
 
 
 func _on_bouclier_change(valeur: int) -> void:
-	_bouclier.text = "Bouclier : %d" % valeur
-	if _dernier_bouclier >= 0 and valeur > _dernier_bouclier:
-		var gain: int = valeur - _dernier_bouclier
-		var pos_centre: Vector2 = _joueur_box.global_position + _joueur_box.size / 2.0
-		_creer_popup("+%d 🛡" % gain, Color(0.4, 0.75, 1.0, 1.0), pos_centre)
-	_dernier_bouclier = valeur
+	label_bouclier.text = "Bouclier : %d" % valeur
 
 
-func _on_or_salle_change(montant: int) -> void:
-	_or_salle.text = "Or de salle : %d" % montant
-	if _dernier_or_salle >= 0 and montant > _dernier_or_salle:
-		var gain: int = montant - _dernier_or_salle
-		var pos_centre: Vector2 = _joueur_box.global_position + _joueur_box.size / 2.0
-		_creer_popup("+%d 🪙" % gain, Color(1.0, 0.85, 0.3, 1.0), pos_centre)
-	_dernier_or_salle = montant
-
-
-func _creer_popup(texte: String, couleur: Color, position_globale: Vector2) -> void:
-	var label := Label.new()
-	label.text = texte
-	label.add_theme_color_override("font_color", couleur)
-	label.add_theme_font_size_override("font_size", 24)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.top_level = true
-	label.position = position_globale + Vector2(-40, -20)
-	label.z_index = 100
-	add_child(label)
-	
-	var tw := create_tween()
-	tw.parallel().tween_property(label, "position:y", label.position.y - 45.0, 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.parallel().tween_property(label, "scale", Vector2(1.25, 1.25), 0.15)
-	tw.chain().tween_property(label, "scale", Vector2(1.0, 1.0), 0.15)
-	tw.parallel().tween_property(label, "modulate:a", 0.0, 0.35).set_delay(0.3)
-	tw.tween_callback(label.queue_free)
-
-
-func _secouer_et_flasher(cible_noeud: Control, couleur_flash: Color) -> void:
-	var tw := create_tween()
-	cible_noeud.modulate = couleur_flash
-	tw.tween_property(cible_noeud, "modulate", Color.WHITE, 0.22)
-	
-	var pos_initiale: float = cible_noeud.position.x
-	tw.parallel().tween_property(cible_noeud, "position:x", pos_initiale - 8.0, 0.04)
-	tw.tween_property(cible_noeud, "position:x", pos_initiale + 8.0, 0.04)
-	tw.tween_property(cible_noeud, "position:x", pos_initiale - 4.0, 0.04)
-	tw.tween_property(cible_noeud, "position:x", pos_initiale, 0.04)
-
-
-func _on_poison_change(valeur: int) -> void:
-	_poison.visible = valeur > 0
-	_poison.text = "Poison : %d" % valeur
+func _on_or_gagne(montant: int, total: int) -> void:
+	label_or.text = "Or gagné dans la salle : +%d (cumul : %d)" % [montant, total]
 
 
 func _on_combat_termine(victoire: bool) -> void:
-	_bouton_lancer.disabled = true
-	_bouton_relancer.visible = false
+	bouton_lancer.disabled = true
 	if victoire:
-		_message_fin.text = "Victoire ! L'or de salle rejoint la bourse.\nSoin à la forge : +%d PV." % EtatPartie.SOIN_FORGE
-		_bouton_forge.visible = true
-		_rafraichir_entete()
+		if EtatPartie.phase == EtatPartie.Phase.VICTOIRE_FINALE:
+			_ouvrir_ecran_fin("res://Scenes/Victory.tscn")
+		else:
+			label_message.text = (
+				"Victoire ! Récompenses : +%d or et +%d éclats. "
+				+ "Totaux : %d or, %d éclats."
+			) % [
+				combat_manager.ennemi.recompense_or,
+				combat_manager.ennemi.recompense_eclats,
+				EtatPartie.or_total,
+				EtatPartie.eclats,
+			]
+			bouton_forge.disabled = not _forge_disponible
+			if not _forge_disponible:
+				label_message.text += " Forge indisponible : Scripts/ForgeScreen.gd est absent."
 	else:
-		_message_fin.text = "Défaite… Run terminée (salles gagnées : %d)." % EtatPartie.salles_gagnees
-		_bouton_titre.visible = true
+		if EtatPartie.phase == EtatPartie.Phase.GAME_OVER:
+			_ouvrir_ecran_fin("res://Scenes/GameOver.tscn")
+		else:
+			label_message.text = "La défaite n'a pas été enregistrée dans l'état de la partie."
+		bouton_forge.disabled = true
+	_actualiser_actions()
 
 
-func _on_bouton_forge_presse() -> void:
+func _ouvrir_ecran_fin(chemin: String) -> void:
+	var erreur: Error = get_tree().change_scene_to_file(chemin)
+	if erreur != OK:
+		push_error("Impossible d'ouvrir l'écran de fin %s : %s" % [
+			chemin,
+			error_string(erreur),
+		])
+		label_message.text = "La partie est terminée, mais l'écran de fin n'a pas pu s'ouvrir."
+
+
+func _on_bouton_forge_pressed() -> void:
+	if (
+		combat_manager.etat != CombatManager.EtatCombat.VICTOIRE
+		or EtatPartie.phase != EtatPartie.Phase.FORGE
+	):
+		return
+	if not _forge_disponible:
+		bouton_forge.disabled = true
+		label_message.text = "Forge indisponible : Scripts/ForgeScreen.gd est absent."
+		return
 	EtatPartie.aller_a_forge()
 
 
-func _on_bouton_titre_presse() -> void:
-	EtatPartie.retour_titre()
+func _actualiser_actions() -> void:
+	bouton_lancer.disabled = not combat_manager.peut_lancer()
+	bouton_forge.disabled = (
+		combat_manager.etat != CombatManager.EtatCombat.VICTOIRE
+		or EtatPartie.phase != EtatPartie.Phase.FORGE
+		or not _forge_disponible
+	)

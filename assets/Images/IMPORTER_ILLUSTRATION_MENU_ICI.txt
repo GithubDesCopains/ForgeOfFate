@@ -1,7 +1,2 @@
-Importer ici l'illustration de référence du menu principal.
-
-Dans Scenes/Title.tscn, sélectionner le nœud Title et assigner l'image à la
-propriété « Illustration fond » du script TitleScreen.gd.
-
-L'illustration de référence n'était pas présente dans les assets du projet au
-moment de la mission 13. L'interface signale son absence jusque-là.
+Consulter Backgrounds/IMPORTER_FOND_MENU.txt pour les spécifications et les
+étapes d'intégration de l'illustration originale du menu.

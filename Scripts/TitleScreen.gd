@@ -1,6 +1,6 @@
 extends Control
 
-const TITRE_JEU: String = "FORGED BY FATE"
+const TITRE_JEU: String = "Forged by Fate"
 
 @export var illustration_fond: Texture2D
 

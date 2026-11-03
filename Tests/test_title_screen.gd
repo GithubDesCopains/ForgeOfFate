@@ -62,7 +62,7 @@ func _tester_scene_et_boutons() -> void:
 		title.get_node("MenuPanel/Marge/Menu/Quitter"),
 	]
 	_verifier(
-		title.get_node("MenuPanel/Marge/Menu/Titre").text == "FORGED BY FATE",
+		title.get_node("MenuPanel/Marge/Menu/Titre").text == "Forged by Fate",
 		"Le titre du jeu est affiché"
 	)
 	_verifier(
@@ -73,14 +73,36 @@ func _tester_scene_et_boutons() -> void:
 		and boutons[3] is Button,
 		"Les quatre actions sont des boutons Godot distincts"
 	)
+	var bouton_principal := boutons[0] as Button
+	var styles_communs: bool = (
+		bouton_principal.get_theme_stylebox("normal") != null
+		and bouton_principal.get_theme_stylebox("hover") != null
+		and bouton_principal.get_theme_stylebox("pressed") != null
+		and bouton_principal.get_theme_stylebox("disabled") != null
+		and bouton_principal.get_theme_font("font") != null
+	)
+	_verifier(
+		styles_communs,
+		"Le thème commun fournit les états des boutons et la police du moteur"
+	)
 	_verifier(
 		(title.get_node("MenuPanel/Marge/Menu/Continuer") as Button).disabled,
 		"Continuer reste désactivé sans sauvegarde"
 	)
 	_verifier(
-		(title.get_node("AssetNotice") as Label).visible,
-		"L'absence de l'illustration est signalée"
+		(title.get_node("MenuPanel/Marge/Menu/Quitter") as Button).pressed.is_connected(
+			Callable(title, "_on_quitter")
+		),
+		"Le bouton Quitter conserve sa connexion"
 	)
+	_verifier(
+		not (title.get_node("AssetNotice") as Label).visible
+		and (title.get_node("Illustration") as TextureRect).texture != null
+		and (title.get_node("Illustration") as TextureRect).texture.resource_path
+			== "res://assets/Images/Backgrounds/menu/fond_menu.jpg",
+		"L'illustration importée est assignée au fond et son absence n'est plus signalée"
+	)
+	await _tester_adaptabilite(scene)
 	(title.get_node("MenuPanel/Marge/Menu/Options") as Button).emit_signal("pressed")
 	_verifier(
 		(title.get_node("MenuPanel/Marge/Menu/Message") as Label).text.contains(
@@ -88,6 +110,49 @@ func _tester_scene_et_boutons() -> void:
 		),
 		"Options affiche un message explicatif"
 	)
+
+
+func _tester_adaptabilite(scene: PackedScene) -> void:
+	for taille in [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]:
+		var viewport := SubViewport.new()
+		viewport.size = taille
+		add_child(viewport)
+		var menu := scene.instantiate() as Control
+		viewport.add_child(menu)
+		await get_tree().process_frame
+		await get_tree().process_frame
+
+		var panneau := menu.get_node("MenuPanel") as Control
+		var panneau_rect: Rect2 = panneau.get_global_rect()
+		var illustration := menu.get_node("Illustration") as TextureRect
+		var illustration_rect: Rect2 = illustration.get_global_rect()
+		var panneau_visible: bool = (
+			panneau_rect.position.x >= 0
+			and panneau_rect.position.y >= 0
+			and panneau_rect.end.x <= taille.x
+			and panneau_rect.end.y <= taille.y
+		)
+		var commandes_dans_panneau: bool = true
+		for nom in ["Titre", "NouvellePartie", "Continuer", "Options", "Quitter"]:
+			var commande := menu.get_node("MenuPanel/Marge/Menu/" + nom) as Control
+			var commande_rect: Rect2 = commande.get_global_rect()
+			if not panneau_rect.encloses(commande_rect):
+				commandes_dans_panneau = false
+
+		_verifier(
+			panneau_visible and commandes_dans_panneau,
+			"Le titre et les boutons restent dans le panneau en %d x %d"
+			% [taille.x, taille.y]
+		)
+		_verifier(
+			illustration.texture != null
+			and illustration.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_COVERED
+			and is_equal_approx(illustration_rect.size.x, taille.x)
+			and is_equal_approx(illustration_rect.size.y, taille.y),
+			"Le fond couvre la fenêtre sans déformation en %d x %d" % [taille.x, taille.y]
+		)
+		viewport.queue_free()
+		await get_tree().process_frame
 
 
 func _tester_nouvelle_partie() -> void:

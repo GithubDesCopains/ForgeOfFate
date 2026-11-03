@@ -1,0 +1,6 @@
+Illustration originale du menu intégrée :
+assets/Images/Backgrounds/menu/fond_menu.jpg
+
+L'image est assignée à la propriété « Illustration fond » du nœud Title dans
+Scenes/Title.tscn. Le TextureRect la recadre pour couvrir la fenêtre et le
+panneau du menu reste au premier plan.
